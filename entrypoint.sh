@@ -1,6 +1,17 @@
 #!/bin/bash
 set -e
 
+# Ensure directories have correct ownership
+if [ "$(stat -c '%u' /app/outputs)" != "$UID" ]; then
+    echo "Fixing permissions for /app/outputs"
+    sudo chown -R $UID:$GID /app/outputs
+fi
+
+if [ "$(stat -c '%u' /app/hf_download)" != "$UID" ]; then
+    echo "Fixing permissions for /app/hf_download"
+    sudo chown -R $UID:$GID /app/hf_download
+fi
+
 # Check for required models
 MODEL_CHECKLIST=(
   "/app/models/checkpoints/sd_xl_base_1.0.safetensors"
@@ -15,4 +26,4 @@ for model in "${MODEL_CHECKLIST[@]}"; do
   fi
 done
 
-exec python demo_gradio.py --share --server-name 0.0.0.0
+exec "$@"

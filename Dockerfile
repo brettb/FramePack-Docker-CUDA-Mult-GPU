@@ -27,7 +27,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxrender1 \
     libxext6 \
     ninja-build \
-    && rm -rf /var/lib/apt/lists/*
+    sudo \
+    && rm -rf /var/lib/apt/lists/* \
+    && echo "appuser ALL=(ALL) NOPASSWD: /bin/chown" >> /etc/sudoers
 
 # Create and configure directories before switching user
 RUN mkdir -p /app && \
@@ -63,19 +65,20 @@ RUN pip install --no-cache-dir \
 RUN mkdir -p /app/outputs && \
     chown -R $UID:$GID /app/outputs && \
     mkdir -p $VIRTUAL_ENV && \
-    chown -R $UID:$GID $VIRTUAL_ENV
+    chown -R $UID:$GID $VIRTUAL_ENV && \
+    mkdir -p /app/hf_download && \
+    chown -R $UID:$GID /app/hf_download
 
-# Model directory setup
-RUN mkdir -p /app/hf_download && \
-    chmod -R 777 /app/hf_download
+# Copy entrypoint script
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh && \
+    chown $UID:$GID /entrypoint.sh
 
-# Expose output directory
-RUN mkdir -p /app/outputs && \
-    chmod -R 777 /app/outputs
+EXPOSE 7860
 
-# Configure directories
+# Configure volumes
 VOLUME /app/hf_download
 VOLUME /app/outputs
 
-EXPOSE 7860
-CMD ["python", "demo_gradio.py", "--share"]
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["python", "demo_gradio.py", "--share", "--server-name", "0.0.0.0"]
