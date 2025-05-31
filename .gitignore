@@ -1,3 +1,9 @@
-hf_download
-outputs
+hf_download/
+outputs/
+models/
+venv/
+.hf_cache/
+.nv/
+.DS_Store
+._.DS_Store
 .aider*
