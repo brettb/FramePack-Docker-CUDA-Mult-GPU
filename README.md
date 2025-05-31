@@ -1,6 +1,15 @@
+After geting the original FramePack Docker CUDA repository functioning, I modified it to work with the latest version of PyTorch and CUDA. I then thought it would be easy to add multi-GPU support, I was wrong. I ended up spending a bunch of time modifying the code to make it work with multiple GPUs and CUDA container.
+
+You can now launch FramePack with multiple GPUs by running the `run_gpu0.sh` and `run_gpu1.sh` scripts. Each GPU will utilize the same models and output directories, they will however be running on different GPUs. You can add additional GPUs by modifying the `run_gpu*.sh` scripts to your specific configuration. You can also ad the --share flag for a public URL to these scripts if desired.
+
+You should also verify that the TORCH_CUDA_ARCH_LIST matches the architecture of your GPU. You can find this by running `nvidia-smi` on the host. The value is located in the Dockerfile
+
+Thanks to akitaonrails for the original FramePack Docker CUDA repository. You can find it here:
+https://github.com/akitaonrails/FramePack-Docker-CUDA
+
 # FramePack Docker CUDA
 
-Docker container for running FramePack with CUDA support, optimized for multi-GPU environments. This setup dynamically patches FramePack source code for compatibility with newer PyTorch versions and handles Hugging Face model loading specifics.
+Docker container for running FramePack with CUDA support, optimized for multi-GPU environments. This setup dynamically patches FramePack source code for compatibility with newer PyTorch & CUDA versions and handles Hugging Face model loading specifics.
 
 ## Prerequisites
 
@@ -14,8 +23,8 @@ Docker container for running FramePack with CUDA support, optimized for multi-GP
 
 1.  **Clone the Repository**:
     ```bash
-    git clone https://github.com/brettb/FramePack-Docker-CUDA.git
-    cd FramePack-Docker-CUDA
+    git clone https://github.com/brettb/FramePack-Docker-CUDA-Multi-GPU.git
+    cd FramePack-Docker-CUDA-Multi-GPU
     ```
     The necessary host-side directories (`outputs`, `hf_download`, `models`) will be created automatically by the run scripts if they don't exist and are mounted into the container.
 
