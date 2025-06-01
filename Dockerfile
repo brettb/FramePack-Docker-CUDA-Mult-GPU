@@ -1,4 +1,5 @@
 # Use CUDA 12.4.2 with cuDNN 9 for better compatibility
+# FROM nvidia/cuda:12.4.2-cudnn9-devel-ubuntu22.04
 FROM nvidia/cuda:12.8.1-cudnn-devel-ubuntu24.04
 
 # Set user/group IDs to match host user (default 1000 for first user)
