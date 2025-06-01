@@ -1,3 +1,5 @@
+![image](https://github.com/user-attachments/assets/72f23a1c-bd7b-4d85-b593-29017b14d22f)
+
 # FramePack Docker CUDA
 
 Docker container for running FramePack with CUDA support, optimized for multi-GPU environments. This setup dynamically patches FramePack source code for compatibility with newer PyTorch & CUDA versions and handles Hugging Face model loading specifics.
