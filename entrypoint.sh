@@ -63,9 +63,12 @@ if [ "$#" -eq 0 ] || [ "$1" = "app" ]; then
     echo "New PYTHONPATH: $PYTHONPATH"
 
 
+riginal method
+#     echo "Starting FramePack application with 'python3 demo_gradio.py' ..."
+#     exec python3 demo_gradio.py --server 0.0.0.0 --port ${PORT:-7860}
 
-    echo "Starting FramePack application with 'python3 demo_gradio.py' ..."
-    exec python3 demo_gradio.py --server 0.0.0.0 --port ${PORT:-7860}
+    echo "Starting FramePack application with 'python3 demo_gradio_f1.py' ..."
+    exec python3 demo_gradio_f1.py --server 0.0.0.0 --port ${PORT:-7860}
 elif [ "$1" = "bash" ]; then
     echo "Starting bash shell..."
     exec /bin/bash

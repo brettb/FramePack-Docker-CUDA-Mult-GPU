@@ -17,8 +17,22 @@ GROUP_ID=$(id -g)
 IMAGE_NAME="framepack-torch26-cu124:optimized"
 
 # Set environment variables for better performance and memory management
-export PYTORCH_CUDA_ALLOC_CONF="max_split_size_mb:64,expandable_segments:True"
-export PYTORCH_NO_CUDA_MEMORY_CACHING=1
+# Balanced performance and memory settings
+# Configure allocator: moderate split size, earlier GC, async backend
+export PYTORCH_CUDA_ALLOC_CONF="max_split_size_mb:128,garbage_collection_threshold:0.7,expandable_segments:True,backend:cudaMallocAsync"
+# Enable PyTorch's memory caching for performance
+export PYTORCH_NO_CUDA_MEMORY_CACHING=0
+# Keep model in full precision and on GPU
+export MODEL_KEEP_IN_FP32=1
+export TRANSFORMERS_OFFLOAD_CPU=0
+export PIPELINE_OFFLOAD_CPU=0
+# Enable cuDNN benchmarking for performance (finds optimal algorithms)
+export CUDNN_BENCHMARK=1
+# Ensure TOKENIZERS_PARALLELISM is false if set elsewhere, otherwise can be omitted if default is fine
+# export TOKENIZERS_PARALLELISM=false # This was already present later, ensure consistency or remove redundancy
+# OMP_NUM_THREADS and MKL_NUM_THREADS are fine at 1 for single GPU tasks if not CPU-bound for pre/post processing
+# export OMP_NUM_THREADS=1 # Already present
+# export MKL_NUM_THREADS=1 # Already present
 export CUDA_VISIBLE_DEVICES=1  # Use GPU 1
 export PORT=7861 # Port for this instance
 export TORCH_CUDA_ARCH_LIST="8.6 9.0" # Match Dockerfile or remove if solely in Dockerfile
@@ -60,10 +74,11 @@ docker run -it --rm --name framepack-gpu1 \
   -v "${SCRIPT_DIR}/hf_download:/app/hf_download" \
   -v "${SCRIPT_DIR}/models:/app/models" \
   -p ${PORT}:${PORT} \
-  --ulimit memlock=-1 \
+  --ulimit memlock=1073741824 \
   --ulimit stack=67108864 \
   --ipc=host \
-  --shm-size=16g \
+  --shm-size=1g \
   --user root \
-  $IMAGE_NAME
-  # The Docker image's ENTRYPOINT ["/app/entrypoint.sh"] and CMD ["app"] will be used.
+  $IMAGE_NAME \
+  python3 demo_gradio_f1.py --server 0.0.0.0 --port ${PORT:-7861}
+  # The Docker image's ENTRYPOINT ["/app/entrypoint.sh"] will be used with the new CMD.

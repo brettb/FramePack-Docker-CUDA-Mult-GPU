@@ -79,7 +79,7 @@ USER $UID:$GID
 
 # Clone repository
 RUN TEMP_CLONE_DIR=$(mktemp -d) && \
-    git clone https://github.com/lllyasviel/FramePack "$TEMP_CLONE_DIR" && \
+    git clone https://github.com/brettb/FramePack.git "$TEMP_CLONE_DIR" && \
     cp -a "$TEMP_CLONE_DIR"/. /app/ && \
     rm -rf "$TEMP_CLONE_DIR"
 

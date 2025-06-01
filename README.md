@@ -22,7 +22,7 @@ Docker container for running FramePack with CUDA support, optimized for multi-GP
 2.  **Build the Docker Image**:
     This only needs to be done once, or when you modify `Dockerfile` or `entrypoint.sh`.
     ```bash
-    docker build -t framepack-torch26-cu124:optimized .
+    docker build --no-cache-t framepack-torch26-cu124:optimized .
     ```
 
 3.  **Run FramePack**:
