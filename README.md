@@ -2,7 +2,7 @@
 
 # FramePack Docker CUDA
 
-Docker container for running FramePack with CUDA support, optimized for multi-GPU environments. This setup dynamically patches FramePack source code for compatibility with newer PyTorch & CUDA versions and handles Hugging Face model loading specifics.
+Docker container for running FramePack with CUDA support, optimized for multi-GPU environments. This setup dynamically patches FramePack source code for compatibility with newer PyTorch 2.7 & CUDA 12.8 and handles Hugging Face model loading specifics. This container will support NVIDIA 3000, 4000 & 5000 series GPUs. You can any specifics to your GPU in the Docker file.
 
 ## Prerequisites
 

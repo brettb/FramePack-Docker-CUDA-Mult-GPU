@@ -49,20 +49,37 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libsm6 \
     libxrender1 \
     libxext6 \
+    # AVIF support for PIL/Pillow
+    libavif-dev \
     # Build tools
     ninja-build \
+    build-essential \
+    cmake \
     sudo \
     # Performance monitoring
     htop \
     nvtop \
     # System utils
     wget \
+    # FlashAttention2 build dependencies
+    pkg-config \
+    clang \
+    libomp-dev \
+    g++ \
+    gcc \
+    make \
+    git-lfs \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
     && echo "appuser ALL=(ALL) NOPASSWD: /bin/chown" >> /etc/sudoers \
     # Create a clean cache directory that can be written to by the user
     && mkdir -p /home/appuser/.cache \
-    && chown -R $UID:$GID /home/appuser/.cache
+    && chown -R $UID:$GID /home/appuser/.cache && \
+    # Install ninja-build from package manager
+    apt-get update && \
+    apt-get install -y --no-install-recommends ninja-build && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 # Create and configure directories before switching user
 RUN mkdir -p /app && \
@@ -92,17 +109,17 @@ WORKDIR /app
 RUN python3 -m venv $VIRTUAL_ENV
 
 # Install PyTorch with CUDA 12.1 (compatible with CUDA 12.4 runtime)
-RUN pip install --no-cache-dir -U pip setuptools wheel && \
-    pip install --no-cache-dir \
-    --index-url https://download.pytorch.org/whl/cu121 \
-    torch==2.2.2+cu121 \
-    torchvision==0.17.2+cu121 \
-    torchaudio==2.2.2+cu121 \
-    --no-cache-dir
+# RUN pip install --no-cache-dir -U pip setuptools wheel && \
+#    pip install --no-cache-dir \
+#    --index-url https://download.pytorch.org/whl/cu128 \
+#    torch==2.7.0+cu128 \
+#    torchvision \
+#    torchaudio \
+#    --no-cache-dir
 
 # Install requirements with optimizations
 RUN pip install --no-cache-dir -r requirements.txt \
-    --extra-index-url https://download.pytorch.org/whl/cu124 \
+    --extra-index-url https://download.pytorch.org/whl/cu128 \
     --prefer-binary \
     --no-build-isolation
 
@@ -114,13 +131,55 @@ RUN pip install --no-cache-dir \
     py-cpuinfo \
     psutil \
     py3nvml \
+    wheel \
     --prefer-binary
 
-# Install performance monitoring tools
-RUN pip install --no-cache-dir \
+# Install Framepack source in the main virtual environment
+RUN set -x && \
+    # Set CUDA environment variables needed for compilation
+    export TORCH_CUDA_ARCH_LIST="8.0 8.6 8.9 9.0 15.0+PTX" && \
+    export SAGEATTENTION_CUDA_ARCH_LIST="8.0;8.6;8.9;9.0;15.0" && \
+    export FORCE_CUDA=1 && \
+    export CMAKE_CUDA_ARCHITECTURES="80;86;89;90;150" && \
+    export CMAKE_ARGS="-DCMAKE_CUDA_COMPILER=/usr/local/cuda/bin/nvcc -DCMAKE_CUDA_ARCHITECTURES=80;86;89;90;150" && \
+    export MAX_JOBS=$(nproc) && \
+    # Clone the repository
+    git clone --depth 1 https://github.com/brettb/FramePack.git /tmp/FramePack && \
+    cd /tmp/FramePack && \
+    # Show directory structure and look for setup.py files (especially for SageAttention)
+    echo "=== Directory structure in /tmp/FramePack ===" && \
+    ls -la && \
+    echo "\n=== Searching for setup.py files ===" && \
+    find . -name "setup.py" -print && \
+    # Show requirements.txt content
+    echo "\n=== requirements.txt content ===" && \
+    cat requirements.txt && \
+    # Install required dependencies from requirements.txt
+    # The CUDA environment variables set above will apply to this step.
+    echo "\n=== Installing requirements from requirements.txt ===" && \
+    pip install -r requirements.txt --verbose && \
+    # At this point, dependencies are installed. FramePack scripts are available in /tmp/FramePack.
+    # SageAttention might have been installed if it was in requirements.txt, or if it's a sub-module,
+    # we'll need to install it explicitly based on the 'find setup.py' output.
+    # For now, we are NOT running 'pip install .' at the root of FramePack.
+    echo "\n=== FramePack dependencies installed. SageAttention build (if separate) needs to be confirmed. ===" && \
+    # Verify Python environment (optional)
+    echo "\n=== Verifying Python environment ===" && \
+    python -c "import sys; import torch; print(f'PyTorch version: {torch.__version__}'); print(f'CUDA available: {torch.cuda.is_available()}'); print('\nPython sys.path:'); print('\n'.join(sys.path))" && \
+    # Clean up /tmp/FramePack. 
+    # WARNING: If FramePack scripts are run directly from this path later, do not remove it yet.
+    # Assuming for now that necessary components are installed into site-packages or copied elsewhere.
+    cd /app && \
+    rm -rf /tmp/FramePack && \
+    echo "\n=== Docker build step for FramePack completed ==="
+
+# Install performance monitoring tools and AVIF support for Pillow
+RUN pip install --no-cache-dir setuptools>=45 && \
+    pip install --no-cache-dir \
     nvitop \
     gpustat \
     py3nvml \
+    pillow-avif-plugin \
     --prefer-binary
 
 # Create application directories
